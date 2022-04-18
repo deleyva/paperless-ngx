@@ -47,10 +47,7 @@ def set_correspondent(
     potential_correspondents = matching.match_correspondents(document, classifier)
 
     potential_count = len(potential_correspondents)
-    if potential_correspondents:
-        selected = potential_correspondents[0]
-    else:
-        selected = None
+    selected = potential_correspondents[0] if potential_correspondents else None
     if potential_count > 1:
         if use_first:
             logger.debug(
@@ -113,11 +110,7 @@ def set_document_type(
     potential_document_type = matching.match_document_types(document, classifier)
 
     potential_count = len(potential_document_type)
-    if potential_document_type:
-        selected = potential_document_type[0]
-    else:
-        selected = None
-
+    selected = potential_document_type[0] if potential_document_type else None
     if potential_count > 1:
         if use_first:
             logger.info(

@@ -250,11 +250,7 @@ class Document(models.Model):
         if suffix:
             result += suffix
 
-        if archive:
-            result += ".pdf"
-        else:
-            result += self.file_type
-
+        result += ".pdf" if archive else self.file_type
         return pathvalidate.sanitize_filename(result, replacement_text="-")
 
     @property
@@ -410,7 +406,7 @@ class FileInfo:
     @classmethod
     def _mangle_property(cls, properties, name):
         if name in properties:
-            properties[name] = getattr(cls, "_get_{}".format(name))(properties[name])
+            properties[name] = getattr(cls, f"_get_{name}")(properties[name])
 
     @classmethod
     def from_filename(cls, filename):
@@ -440,8 +436,7 @@ class FileInfo:
 
         # Parse filename components.
         for regex in cls.REGEXES.values():
-            m = regex.match(filename)
-            if m:
+            if m := regex.match(filename):
                 properties = m.groupdict()
                 cls._mangle_property(properties, "created")
                 cls._mangle_property(properties, "title")

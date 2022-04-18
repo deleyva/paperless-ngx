@@ -88,10 +88,11 @@ class TestArchiver(DirectoriesMixin, TestCase):
             mime_type="application/pdf",
             filename="document_01.pdf",
         )
-        shutil.copy(sample_file, os.path.join(self.dirs.originals_dir, f"document.pdf"))
+        shutil.copy(sample_file, os.path.join(self.dirs.originals_dir, "document.pdf"))
         shutil.copy(
-            sample_file, os.path.join(self.dirs.originals_dir, f"document_01.pdf")
+            sample_file, os.path.join(self.dirs.originals_dir, "document_01.pdf")
         )
+
 
         handle_document(doc2.pk)
         handle_document(doc1.pk)
@@ -147,10 +148,11 @@ class TestDecryptDocuments(TestCase):
                 "samples",
                 "documents",
                 "thumbnails",
-                f"0000004.png.gpg",
+                "0000004.png.gpg",
             ),
             os.path.join(thumb_dir, f"{doc.id:07}.png.gpg"),
         )
+
 
         call_command("decrypt_documents")
 

@@ -25,14 +25,13 @@ def _tags_from_path(filepath):
     """Walk up the directory tree from filepath to CONSUMPTION_DIR
     and get or create Tag IDs for every directory.
     """
-    tag_ids = set()
     path_parts = Path(filepath).relative_to(settings.CONSUMPTION_DIR).parent.parts
-    for part in path_parts:
-        tag_ids.add(
-            Tag.objects.get_or_create(name__iexact=part, defaults={"name": part})[0].pk
-        )
-
-    return tag_ids
+    return {
+        Tag.objects.get_or_create(name__iexact=part, defaults={"name": part})[
+            0
+        ].pk
+        for part in path_parts
+    }
 
 
 def _is_ignored(filepath: str) -> bool:
@@ -64,9 +63,10 @@ def _consume(filepath):
         async_task(
             "documents.tasks.consume_file",
             filepath,
-            override_tag_ids=tag_ids if tag_ids else None,
+            override_tag_ids=tag_ids or None,
             task_name=os.path.basename(filepath)[:100],
         )
+
     except Exception as e:
         # Catch all so that the consumer won't crash.
         # This is also what the test case is listening for to check for
@@ -183,10 +183,7 @@ class Command(BaseCommand):
         try:
             while not self.stop_flag:
                 for event in inotify.read(timeout=1000):
-                    if recursive:
-                        path = inotify.get_path(event.wd)
-                    else:
-                        path = directory
+                    path = inotify.get_path(event.wd) if recursive else directory
                     filepath = os.path.join(path, event.name)
                     _consume(filepath)
         except KeyboardInterrupt:

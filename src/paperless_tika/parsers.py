@@ -71,7 +71,7 @@ class TikaDocumentParser(DocumentParser):
     def convert_to_pdf(self, document_path, file_name):
         pdf_path = os.path.join(self.tempdir, "convert.pdf")
         gotenberg_server = settings.PAPERLESS_TIKA_GOTENBERG_ENDPOINT
-        url = gotenberg_server + "/forms/libreoffice/convert"
+        url = f"{gotenberg_server}/forms/libreoffice/convert"
 
         self.log("info", f"Converting {document_path} to PDF as {pdf_path}")
         files = {
@@ -88,8 +88,6 @@ class TikaDocumentParser(DocumentParser):
         except Exception as err:
             raise ParseError(f"Error while converting document to PDF: {err}")
 
-        file = open(pdf_path, "wb")
-        file.write(response.content)
-        file.close()
-
+        with open(pdf_path, "wb") as file:
+            file.write(response.content)
         return pdf_path

@@ -49,9 +49,9 @@ class Document(object):
     def __str__(self):
         created = self.created.strftime("%Y%m%d%H%M%S")
         if self.correspondent and self.title:
-            return "{}: {} - {}".format(created, self.correspondent, self.title)
+            return f"{created}: {self.correspondent} - {self.title}"
         if self.correspondent or self.title:
-            return "{}: {}".format(created, self.correspondent or self.title)
+            return f"{created}: {self.correspondent or self.title}"
         return str(created)
 
     @property
@@ -69,7 +69,7 @@ class Document(object):
 
     @property
     def file_name(self):
-        return slugify(str(self)) + "." + self.file_type
+        return f"{slugify(str(self))}.{self.file_type}"
 
 
 def set_checksums(apps, schema_editor):
@@ -97,12 +97,9 @@ def set_checksums(apps, schema_editor):
         document = Document(d)
 
         print(
-            "    {} {} {}".format(
-                colourise("*", fg="green"),
-                colourise("Generating a checksum for", fg="white"),
-                colourise(document.file_name, fg="cyan"),
-            )
+            f'    {colourise("*", fg="green")} {colourise("Generating a checksum for", fg="white")} {colourise(document.file_name, fg="cyan")}'
         )
+
 
         with document.source_file as encrypted:
             checksum = hashlib.md5(GnuPG.decrypted(encrypted)).hexdigest()
@@ -122,11 +119,11 @@ def set_checksums(apps, schema_editor):
                     fg="yellow",
                 ),
                 doc1=colourise(
-                    "  * {} (id: {})".format(sums[checksum][1], sums[checksum][0]),
+                    f"  * {sums[checksum][1]} (id: {sums[checksum][0]})",
                     fg="red",
                 ),
                 doc2=colourise(
-                    "  * {} (id: {})".format(document.file_name, document.pk), fg="red"
+                    f"  * {document.file_name} (id: {document.pk})", fg="red"
                 ),
                 code=colourise(
                     "  $ echo 'DELETE FROM documents_document WHERE id = {pk};' | ./manage.py dbshell".format(
@@ -134,8 +131,11 @@ def set_checksums(apps, schema_editor):
                     ),
                     fg="green",
                 ),
-                line=colourise("\n{}\n".format("=" * 80), fg="white", opts=("bold",)),
+                line=colourise(
+                    "\n{}\n".format("=" * 80), fg="white", opts=("bold",)
+                ),
             )
+
             raise RuntimeError(error)
         sums[checksum] = (document.pk, document.file_name)
 

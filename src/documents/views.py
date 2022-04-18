@@ -75,12 +75,11 @@ class IndexView(TemplateView):
         # However, angular generates locales as "en-US".
         # this translates between these two forms.
         lang = get_language()
-        if "-" in lang:
-            first = lang[: lang.index("-")]
-            second = lang[lang.index("-") + 1 :]
-            return f"{first}-{second.upper()}"
-        else:
+        if "-" not in lang:
             return lang
+        first = lang[: lang.index("-")]
+        second = lang[lang.index("-") + 1 :]
+        return f"{first}-{second.upper()}"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -188,8 +187,7 @@ class DocumentViewSet(
         return Document.objects.distinct()
 
     def get_serializer(self, *args, **kwargs):
-        fields_param = self.request.query_params.get("fields", None)
-        if fields_param:
+        if fields_param := self.request.query_params.get("fields", None):
             fields = fields_param.split(",")
         else:
             fields = None
@@ -252,8 +250,7 @@ class DocumentViewSet(
         if not os.path.isfile(file):
             return None
 
-        parser_class = get_parser_class_for_mime_type(mime_type)
-        if parser_class:
+        if parser_class := get_parser_class_for_mime_type(mime_type):
             parser = parser_class(progress_callback=None, logging_group=None)
 
             try:
@@ -265,10 +262,7 @@ class DocumentViewSet(
             return []
 
     def get_filesize(self, filename):
-        if os.path.isfile(filename):
-            return os.stat(filename).st_size
-        else:
-            return None
+        return os.stat(filename).st_size if os.path.isfile(filename) else None
 
     @action(methods=["get"], detail=True)
     def metadata(self, request, pk=None):
@@ -321,8 +315,7 @@ class DocumentViewSet(
     @action(methods=["get"], detail=True)
     def preview(self, request, pk=None):
         try:
-            response = self.file_response(pk, request, "inline")
-            return response
+            return self.file_response(pk, request, "inline")
         except (FileNotFoundError, Document.DoesNotExist):
             raise Http404()
 
@@ -382,38 +375,36 @@ class UnifiedSearchViewSet(DocumentViewSet):
         )
 
     def filter_queryset(self, queryset):
-        if self._is_search_request():
-            from documents import index
-
-            if "query" in self.request.query_params:
-                query_class = index.DelayedFullTextQuery
-            elif "more_like_id" in self.request.query_params:
-                query_class = index.DelayedMoreLikeThisQuery
-            else:
-                raise ValueError()
-
-            return query_class(
-                self.searcher,
-                self.request.query_params,
-                self.paginator.get_page_size(self.request),
-            )
-        else:
+        if not self._is_search_request():
             return super(UnifiedSearchViewSet, self).filter_queryset(queryset)
+        from documents import index
+
+        if "query" in self.request.query_params:
+            query_class = index.DelayedFullTextQuery
+        elif "more_like_id" in self.request.query_params:
+            query_class = index.DelayedMoreLikeThisQuery
+        else:
+            raise ValueError()
+
+        return query_class(
+            self.searcher,
+            self.request.query_params,
+            self.paginator.get_page_size(self.request),
+        )
 
     def list(self, request, *args, **kwargs):
-        if self._is_search_request():
-            from documents import index
-
-            try:
-                with index.open_index_searcher() as s:
-                    self.searcher = s
-                    return super(UnifiedSearchViewSet, self).list(request)
-            except NotFound:
-                raise
-            except Exception as e:
-                return HttpResponseBadRequest(str(e))
-        else:
+        if not self._is_search_request():
             return super(UnifiedSearchViewSet, self).list(request)
+        from documents import index
+
+        try:
+            with index.open_index_searcher() as s:
+                self.searcher = s
+                return super(UnifiedSearchViewSet, self).list(request)
+        except NotFound:
+            raise
+        except Exception as e:
+            return HttpResponseBadRequest(str(e))
 
 
 class LogViewSet(ViewSet):
@@ -553,7 +544,7 @@ class SelectionDataView(GenericAPIView):
             )
         )
 
-        r = Response(
+        return Response(
             {
                 "selected_correspondents": [
                     {"id": t.id, "document_count": t.document_count}
@@ -567,8 +558,6 @@ class SelectionDataView(GenericAPIView):
                 ],
             }
         )
-
-        return r
 
 
 class SearchAutoCompleteView(APIView):
@@ -650,8 +639,6 @@ class BulkDownloadView(GenericAPIView):
 
         with open(temp.name, "rb") as f:
             response = HttpResponse(f, content_type="application/zip")
-            response["Content-Disposition"] = '{}; filename="{}"'.format(
-                "attachment", "documents.zip"
-            )
+            response["Content-Disposition"] = 'attachment; filename="documents.zip"'
 
             return response

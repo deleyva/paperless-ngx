@@ -153,9 +153,10 @@ class Consumer(LoggingMixin):
                     reverse("document-download", kwargs={"pk": document.pk}),
                     reverse("document-thumb", kwargs={"pk": document.pk}),
                     str(document.correspondent),
-                    str(",".join(document.tags.all().values_list("name", flat=True))),
+                    ",".join(document.tags.all().values_list("name", flat=True)),
                 )
             ).wait()
+
         except Exception as e:
             self._fail(
                 MESSAGE_POST_CONSUME_SCRIPT_ERROR,

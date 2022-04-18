@@ -235,7 +235,7 @@ class TestDocumentConsumptionFinishedSignal(TestCase):
         document_consumption_finished.send(
             sender=self.__class__, document=self.doc_contains
         )
-        self.assertTrue(list(self.doc_contains.tags.all()) == [])
+        self.assertTrue(not list(self.doc_contains.tags.all()))
 
     def test_correspondent_applied(self):
         correspondent = Correspondent.objects.create(
