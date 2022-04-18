@@ -33,11 +33,7 @@ def reverse(apps, schema_editor):
     Tag = apps.get_model("documents", "Tag")
 
     def _get_colour_id(rdb):
-        for idx, rdbx in COLOURS_OLD.items():
-            if rdbx == rdb:
-                return idx
-        # Return colour 1 if we can't match anything
-        return 1
+        return next((idx for idx, rdbx in COLOURS_OLD.items() if rdbx == rdb), 1)
 
     for tag in Tag.objects.all():
         colour_id = _get_colour_id(tag.color)

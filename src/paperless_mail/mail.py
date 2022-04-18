@@ -272,8 +272,9 @@ class MailAccountHandler(LoggingMixin):
         for att in message.attachments:
 
             if (
-                not att.content_disposition == "attachment"
-                and rule.attachment_type == MailRule.ATTACHMENT_TYPE_ATTACHMENTS_ONLY
+                att.content_disposition != "attachment"
+                and rule.attachment_type
+                == MailRule.ATTACHMENT_TYPE_ATTACHMENTS_ONLY
             ):  # NOQA: E501
                 self.log(
                     "debug",
@@ -283,9 +284,10 @@ class MailAccountHandler(LoggingMixin):
                 )
                 continue
 
-            if rule.filter_attachment_filename:
-                if not fnmatch(att.filename, rule.filter_attachment_filename):
-                    continue
+            if rule.filter_attachment_filename and not fnmatch(
+                att.filename, rule.filter_attachment_filename
+            ):
+                continue
 
             title = self.get_title(message, att, rule)
 

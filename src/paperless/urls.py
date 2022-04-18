@@ -55,14 +55,20 @@ urlpatterns = [
                     SearchAutoCompleteView.as_view(),
                     name="autocomplete",
                 ),
-                re_path(r"^statistics/", StatisticsView.as_view(), name="statistics"),
+                re_path(
+                    r"^statistics/",
+                    StatisticsView.as_view(),
+                    name="statistics",
+                ),
                 re_path(
                     r"^documents/post_document/",
                     PostDocumentView.as_view(),
                     name="post_document",
                 ),
                 re_path(
-                    r"^documents/bulk_edit/", BulkEditView.as_view(), name="bulk_edit"
+                    r"^documents/bulk_edit/",
+                    BulkEditView.as_view(),
+                    name="bulk_edit",
                 ),
                 re_path(
                     r"^documents/selection_data/",
@@ -88,19 +94,19 @@ urlpatterns = [
                 re_path(
                     r"^doc/(?P<pk>\d+)$",
                     RedirectView.as_view(
-                        url=settings.BASE_URL + "api/documents/%(pk)s/download/"
+                        url=f"{settings.BASE_URL}api/documents/%(pk)s/download/"
                     ),
                 ),
                 re_path(
                     r"^thumb/(?P<pk>\d+)$",
                     RedirectView.as_view(
-                        url=settings.BASE_URL + "api/documents/%(pk)s/thumb/"
+                        url=f"{settings.BASE_URL}api/documents/%(pk)s/thumb/"
                     ),
                 ),
                 re_path(
                     r"^preview/(?P<pk>\d+)$",
                     RedirectView.as_view(
-                        url=settings.BASE_URL + "api/documents/%(pk)s/preview/"
+                        url=f"{settings.BASE_URL}api/documents/%(pk)s/preview/"
                     ),
                 ),
             ]
@@ -109,22 +115,21 @@ urlpatterns = [
     re_path(
         r"^push$",
         csrf_exempt(
-            RedirectView.as_view(url=settings.BASE_URL + "api/documents/post_document/")
+            RedirectView.as_view(
+                url=f"{settings.BASE_URL}api/documents/post_document/"
+            )
         ),
     ),
-    # Frontend assets TODO: this is pretty bad, but it works.
     path(
         "assets/<path:path>",
         RedirectView.as_view(
-            url=settings.STATIC_URL + "frontend/en-US/assets/%(path)s"
+            url=f"{settings.STATIC_URL}frontend/en-US/assets/%(path)s"
         ),
     ),
-    # TODO: with localization, this is even worse! :/
-    # login, logout
     path("accounts/", include("django.contrib.auth.urls")),
-    # Root of the Frontent
     re_path(r".*", login_required(IndexView.as_view()), name="base"),
 ]
+
 
 
 websocket_urlpatterns = [

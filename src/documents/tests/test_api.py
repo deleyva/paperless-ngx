@@ -71,8 +71,9 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
         returned_doc["title"] = "the new title"
 
         response = self.client.put(
-            "/api/documents/{}/".format(doc.pk), returned_doc, format="json"
+            f"/api/documents/{doc.pk}/", returned_doc, format="json"
         )
+
 
         self.assertEqual(response.status_code, 200)
 
@@ -81,7 +82,7 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
         self.assertEqual(doc_after_save.correspondent, c2)
         self.assertEqual(doc_after_save.title, "the new title")
 
-        self.client.delete("/api/documents/{}/".format(doc_after_save.pk))
+        self.client.delete(f"/api/documents/{doc_after_save.pk}/")
 
         self.assertEqual(len(Document.objects.all()), 0)
 
@@ -165,17 +166,17 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
         ) as f:
             f.write(content_thumbnail)
 
-        response = self.client.get("/api/documents/{}/download/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/download/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content)
 
-        response = self.client.get("/api/documents/{}/preview/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/preview/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content)
 
-        response = self.client.get("/api/documents/{}/thumb/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/thumb/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content_thumbnail)
@@ -199,26 +200,22 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
         with open(doc.archive_path, "wb") as f:
             f.write(content_archive)
 
-        response = self.client.get("/api/documents/{}/download/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/download/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content_archive)
 
-        response = self.client.get(
-            "/api/documents/{}/download/?original=true".format(doc.pk)
-        )
+        response = self.client.get(f"/api/documents/{doc.pk}/download/?original=true")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content)
 
-        response = self.client.get("/api/documents/{}/preview/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/preview/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content_archive)
 
-        response = self.client.get(
-            "/api/documents/{}/preview/?original=true".format(doc.pk)
-        )
+        response = self.client.get(f"/api/documents/{doc.pk}/preview/?original=true")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, content)
@@ -229,13 +226,13 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
             title="none", filename=os.path.basename("asd"), mime_type="application/pdf"
         )
 
-        response = self.client.get("/api/documents/{}/download/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/download/")
         self.assertEqual(response.status_code, 404)
 
-        response = self.client.get("/api/documents/{}/preview/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/preview/")
         self.assertEqual(response.status_code, 404)
 
-        response = self.client.get("/api/documents/{}/thumb/".format(doc.pk))
+        response = self.client.get(f"/api/documents/{doc.pk}/thumb/")
         self.assertEqual(response.status_code, 404)
 
     def test_document_filters(self):
@@ -272,60 +269,67 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
         self.assertCountEqual([results[0]["id"], results[1]["id"]], [doc2.id, doc3.id])
 
         response = self.client.get(
-            "/api/documents/?tags__id__in={},{}".format(tag_inbox.id, tag_3.id)
+            f"/api/documents/?tags__id__in={tag_inbox.id},{tag_3.id}"
         )
+
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 2)
         self.assertCountEqual([results[0]["id"], results[1]["id"]], [doc1.id, doc3.id])
 
         response = self.client.get(
-            "/api/documents/?tags__id__in={},{}".format(tag_2.id, tag_3.id)
+            f"/api/documents/?tags__id__in={tag_2.id},{tag_3.id}"
         )
+
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 2)
         self.assertCountEqual([results[0]["id"], results[1]["id"]], [doc2.id, doc3.id])
 
         response = self.client.get(
-            "/api/documents/?tags__id__all={},{}".format(tag_2.id, tag_3.id)
+            f"/api/documents/?tags__id__all={tag_2.id},{tag_3.id}"
         )
+
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["id"], doc3.id)
 
         response = self.client.get(
-            "/api/documents/?tags__id__all={},{}".format(tag_inbox.id, tag_3.id)
+            f"/api/documents/?tags__id__all={tag_inbox.id},{tag_3.id}"
         )
+
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 0)
 
         response = self.client.get(
-            "/api/documents/?tags__id__all={}a{}".format(tag_inbox.id, tag_3.id)
+            f"/api/documents/?tags__id__all={tag_inbox.id}a{tag_3.id}"
         )
+
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 3)
 
-        response = self.client.get("/api/documents/?tags__id__none={}".format(tag_3.id))
+        response = self.client.get(f"/api/documents/?tags__id__none={tag_3.id}")
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 2)
         self.assertCountEqual([results[0]["id"], results[1]["id"]], [doc1.id, doc2.id])
 
         response = self.client.get(
-            "/api/documents/?tags__id__none={},{}".format(tag_3.id, tag_2.id)
+            f"/api/documents/?tags__id__none={tag_3.id},{tag_2.id}"
         )
+
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["id"], doc1.id)
 
         response = self.client.get(
-            "/api/documents/?tags__id__none={},{}".format(tag_2.id, tag_inbox.id)
+            f"/api/documents/?tags__id__none={tag_2.id},{tag_inbox.id}"
         )
+
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(len(results), 0)
@@ -452,7 +456,7 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
                 self.assertNotIn(result["id"], seen_ids)
                 seen_ids.append(result["id"])
 
-        response = self.client.get(f"/api/documents/?query=content&page=6&page_size=10")
+        response = self.client.get("/api/documents/?query=content&page=6&page_size=10")
         results = response.data["results"]
         self.assertEqual(response.data["count"], 55)
         self.assertEqual(len(results), 5)
@@ -472,9 +476,9 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
                 )
                 index.update_document(writer, doc)
 
-        response = self.client.get(f"/api/documents/?query=content&page=0&page_size=10")
+        response = self.client.get("/api/documents/?query=content&page=0&page_size=10")
         self.assertEqual(response.status_code, 404)
-        response = self.client.get(f"/api/documents/?query=content&page=3&page_size=10")
+        response = self.client.get("/api/documents/?query=content&page=3&page_size=10")
         self.assertEqual(response.status_code, 404)
 
     @mock.patch("documents.index.autocomplete")
@@ -580,7 +584,7 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
                 index.update_document(writer, doc)
 
         def search_query(q):
-            r = self.client.get("/api/documents/?query=test" + q)
+            r = self.client.get(f"/api/documents/?query=test{q}")
             self.assertEqual(r.status_code, 200)
             return [hit["id"] for hit in r.data["results"]]
 
@@ -690,7 +694,7 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
                 index.update_document(writer, doc)
 
         def search_query(q):
-            r = self.client.get("/api/documents/?query=test" + q)
+            r = self.client.get(f"/api/documents/?query=test{q}")
             self.assertEqual(r.status_code, 200)
             return [hit["id"] for hit in r.data["results"]]
 
@@ -942,7 +946,7 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
         self.assertEqual(meta["archive_size"], os.stat(archive_file).st_size)
 
     def test_get_metadata_invalid_doc(self):
-        response = self.client.get(f"/api/documents/34576/metadata/")
+        response = self.client.get("/api/documents/34576/metadata/")
         self.assertEqual(response.status_code, 404)
 
     def test_get_metadata_no_archive(self):
@@ -998,7 +1002,7 @@ class TestDocumentApi(DirectoriesMixin, APITestCase):
         )
 
     def test_get_suggestions_invalid_doc(self):
-        response = self.client.get(f"/api/documents/34676/suggestions/")
+        response = self.client.get("/api/documents/34676/suggestions/")
         self.assertEqual(response.status_code, 404)
 
     @mock.patch("documents.views.match_correspondents")

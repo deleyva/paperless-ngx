@@ -38,12 +38,13 @@ class RasterisedDocumentParser(DocumentParser):
                     m = namespace_pattern.match(key)
                     result.append(
                         {
-                            "namespace": m.group(1),
-                            "prefix": meta.REVERSE_NS[m.group(1)],
-                            "key": m.group(2),
+                            "namespace": m[1],
+                            "prefix": meta.REVERSE_NS[m[1]],
+                            "key": m[2],
                             "value": value,
                         }
                     )
+
                 except Exception as e:
                     self.log(
                         "warning",
@@ -152,15 +153,17 @@ class RasterisedDocumentParser(DocumentParser):
         else:
             raise ParseError(f"Invalid ocr mode: {settings.OCR_MODE}")
 
-        if settings.OCR_CLEAN == "clean":
+        if (
+            settings.OCR_CLEAN != "clean"
+            and settings.OCR_CLEAN == "clean-final"
+            and settings.OCR_MODE == "redo"
+            or settings.OCR_CLEAN == "clean"
+        ):
             ocrmypdf_args["clean"] = True
         elif settings.OCR_CLEAN == "clean-final":
-            if settings.OCR_MODE == "redo":
-                ocrmypdf_args["clean"] = True
-            else:
-                ocrmypdf_args["clean_final"] = True
+            ocrmypdf_args["clean_final"] = True
 
-        if settings.OCR_DESKEW and not settings.OCR_MODE == "redo":
+        if settings.OCR_DESKEW and settings.OCR_MODE != "redo":
             ocrmypdf_args["deskew"] = True
 
         if settings.OCR_ROTATE_PAGES:

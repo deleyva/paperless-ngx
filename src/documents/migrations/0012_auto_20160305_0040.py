@@ -69,12 +69,9 @@ def move_documents_and_create_thumbnails(apps, schema_editor):
             continue
 
         print(
-            "    {} {} {}".format(
-                colourise("*", fg="green"),
-                colourise("Generating a thumbnail for", fg="white"),
-                colourise(f, fg="cyan"),
-            )
+            f'    {colourise("*", fg="green")} {colourise("Generating a thumbnail for", fg="white")} {colourise(f, fg="cyan")}'
         )
+
 
         thumb_temp = tempfile.mkdtemp(prefix="paperless", dir=settings.SCRATCH_DIR)
         orig_temp = tempfile.mkdtemp(prefix="paperless", dir=settings.SCRATCH_DIR)

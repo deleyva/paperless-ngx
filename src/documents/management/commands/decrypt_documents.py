@@ -55,7 +55,7 @@ class Command(BaseCommand):
 
         for document in encrypted_files:
 
-            print("Decrypting {}".format(document).encode("utf-8"))
+            print(f"Decrypting {document}".encode("utf-8"))
 
             old_paths = [document.source_path, document.thumbnail_path]
 
@@ -66,7 +66,7 @@ class Command(BaseCommand):
 
             ext = os.path.splitext(document.filename)[1]
 
-            if not ext == ".gpg":
+            if ext != ".gpg":
                 raise CommandError(
                     f"Abort: encrypted file {document.source_path} does not "
                     f"end with .gpg"

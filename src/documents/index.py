@@ -45,7 +45,7 @@ def open_index(recreate=False):
         if exists_in(settings.INDEX_DIR) and not recreate:
             return open_dir(settings.INDEX_DIR, schema=get_schema())
     except Exception:
-        logger.exception(f"Error while opening the index, recreating.")
+        logger.exception("Error while opening the index, recreating.")
 
     if not os.path.isdir(settings.INDEX_DIR):
         os.makedirs(settings.INDEX_DIR, exist_ok=True)
@@ -85,9 +85,9 @@ def update_document(writer, doc):
         correspondent=doc.correspondent.name if doc.correspondent else None,
         correspondent_id=doc.correspondent.id if doc.correspondent else None,
         has_correspondent=doc.correspondent is not None,
-        tag=tags if tags else None,
-        tag_id=tags_ids if tags_ids else None,
-        has_tag=len(tags) > 0,
+        tag=tags or None,
+        tag_id=tags_ids or None,
+        has_tag=tags != '',
         type=doc.document_type.name if doc.document_type else None,
         type_id=doc.document_type.id if doc.document_type else None,
         has_type=doc.document_type is not None,
@@ -126,8 +126,7 @@ class DelayedQuery:
             if k == "correspondent__id":
                 criterias.append(query.Term("correspondent_id", v))
             elif k == "tags__id__all":
-                for tag_id in v.split(","):
-                    criterias.append(query.Term("tag_id", tag_id))
+                criterias.extend(query.Term("tag_id", tag_id) for tag_id in v.split(","))
             elif k == "document_type__id":
                 criterias.append(query.Term("type_id", v))
             elif k == "correspondent__isnull":
@@ -148,10 +147,7 @@ class DelayedQuery:
                 criterias.append(query.DateRange("added", start=isoparse(v), end=None))
             elif k == "added__date__lt":
                 criterias.append(query.DateRange("added", start=None, end=isoparse(v)))
-        if len(criterias) > 0:
-            return query.And(criterias)
-        else:
-            return None
+        return query.And(criterias) if criterias else None
 
     def _get_query_sortedby(self):
         if "ordering" not in self.query_params:
@@ -184,11 +180,11 @@ class DelayedQuery:
         self.searcher = searcher
         self.query_params = query_params
         self.page_size = page_size
-        self.saved_results = dict()
+        self.saved_results = {}
         self.first_score = None
 
     def __len__(self):
-        page = self[0:1]
+        page = self[:1]
         return len(page)
 
     def __getitem__(self, item):
@@ -264,9 +260,9 @@ class DelayedMoreLikeThisQuery(DelayedQuery):
 
 def autocomplete(ix, term, limit=10):
     with ix.reader() as reader:
-        terms = []
-        for (score, t) in reader.most_distinctive_terms(
-            "content", number=limit, prefix=term.lower()
-        ):
-            terms.append(t)
-        return terms
+        return [
+            t
+            for (score, t) in reader.most_distinctive_terms(
+                "content", number=limit, prefix=term.lower()
+            )
+        ]
